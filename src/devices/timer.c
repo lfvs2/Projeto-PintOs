@@ -23,6 +23,8 @@ static int64_t ticks;
 /* Number of loops per timer tick.
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
+static struct list sleep_list;        /*lista das threads dormindo*/
+
 
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
@@ -36,8 +38,10 @@ void
 timer_init (void) 
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
+  list_init(&sleep_list);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
 }
+
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
 void
@@ -83,17 +87,38 @@ timer_elapsed (int64_t then)
 {
   return timer_ticks () - then;
 }
-
+static bool wake_tick_less(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) 
+{
+  struct thread *t_a = list_entry(a, struct thread, elem);
+  struct thread *t_b = list_entry(b, struct thread, elem);
+  return t_a->wake_up_tick != t_b->wake_up_tick;
+  return t_a->priority > t_b->priority;
+}
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
+  if (ticks <= 0)
+    return;
+
+  int64_t start = timer_ticks();/*pega ticks atual do sistema*/
+  struct thread *current = thread_current(); /*ponteiro para modificar a thread atualmente usada*/
+  enum intr_level old_level = intr_disable();/*desativação da interrupção
+  pra alterar a lista de sleeping sem parar no meio*/
+  current->wake_up_tick = start + ticks; /*definiçaõ pro tick de despertar*/
+  /*inserção na lista de "dormindo", seguindo o wake_up_tick*/
+  list_insert_ordered(&sleep_list,&current->elem, &wake_tick_less, NULL);
+  thread_block(); /*bloqueio da thread até acordar*/
+  intr_set_level(old_level);
+
+
+  /*antiga implementação(busy wait)*/
+  /*int64_t start = timer_ticks ();
 
   ASSERT (intr_get_level () == INTR_ON);
   while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+    thread_yield ();*/
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -172,6 +197,20 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+  /*Acordando as threads cujo tempo de dormir acabou*/
+  while(!list_empty(&sleep_list)){
+    struct list_elem *e = list_front(&sleep_list);
+    struct thread *t = list_entry(e, struct thread, elem);
+    if (t->wake_up_tick > ticks)
+      break;
+    list_pop_front(&sleep_list);
+    thread_unblock(t);
+    /*Se a thread acordada tem prioridade maior, ocorre prempção */
+    if (t->priority > thread_get_priority())
+       intr_yield_on_return();
+    
+  }
+  
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
