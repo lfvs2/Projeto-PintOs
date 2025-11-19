@@ -91,13 +91,18 @@ static bool wake_tick_less(const struct list_elem *a, const struct list_elem *b,
 {
   struct thread *t_a = list_entry(a, struct thread, elem);
   struct thread *t_b = list_entry(b, struct thread, elem);
-  return t_a->wake_up_tick != t_b->wake_up_tick;
+
+  if (t_a->wake_up_time < t_b->wake_up_time)
+    return true;
+
+  if (t_a->wake_up_time > t_b->wake_up_time)
+    return false;
+    
   return t_a->priority > t_b->priority;
 }
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
-void
-timer_sleep (int64_t ticks) 
+void timer_sleep (int64_t ticks) 
 {
   if (ticks <= 0)
     return;
@@ -106,10 +111,13 @@ timer_sleep (int64_t ticks)
   struct thread *current = thread_current(); /*ponteiro para modificar a thread atualmente usada*/
   enum intr_level old_level = intr_disable();/*desativação da interrupção
   pra alterar a lista de sleeping sem parar no meio*/
-  current->wake_up_tick = start + ticks; /*definiçaõ pro tick de despertar*/
-  /*inserção na lista de "dormindo", seguindo o wake_up_tick*/
-  list_insert_ordered(&sleep_list,&current->elem, &wake_tick_less, NULL);
-  thread_block(); /*bloqueio da thread até acordar*/
+
+  current->wake_up_time = start + ticks; // definição para o tick de despertar
+  
+  list_insert_ordered(&sleep_list,&current->elem, &wake_tick_less, NULL); // inserção na lista de "dormindo", seguindo o wake_up_time
+
+  thread_block(); // bloqueio da thread até acordar
+
   intr_set_level(old_level);
 
 
@@ -190,7 +198,7 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
-
+
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
@@ -201,7 +209,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
   while(!list_empty(&sleep_list)){
     struct list_elem *e = list_front(&sleep_list);
     struct thread *t = list_entry(e, struct thread, elem);
-    if (t->wake_up_tick > ticks)
+    if (t->wake_up_time > ticks)
       break;
     list_pop_front(&sleep_list);
     thread_unblock(t);
