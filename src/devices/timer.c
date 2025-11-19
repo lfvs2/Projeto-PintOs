@@ -87,6 +87,7 @@ timer_elapsed (int64_t then)
 {
   return timer_ticks () - then;
 }
+
 static bool wake_tick_less(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) 
 {
   struct thread *t_a = list_entry(a, struct thread, elem);
@@ -98,8 +99,9 @@ static bool wake_tick_less(const struct list_elem *a, const struct list_elem *b,
   if (t_a->wake_up_time > t_b->wake_up_time)
     return false;
     
-  return t_a->priority > t_b->priority;
+  return t_a->priority > t_b->priority; // if both thread's ticks were the same, the priority defines who has preference in the ordered list.
 }
+
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void timer_sleep (int64_t ticks) 
@@ -120,13 +122,6 @@ void timer_sleep (int64_t ticks)
 
   intr_set_level(old_level);
 
-
-  /*antiga implementação(busy wait)*/
-  /*int64_t start = timer_ticks ();
-
-  ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();*/
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be

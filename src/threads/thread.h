@@ -89,6 +89,8 @@ struct thread
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
     int64_t wake_up_time;               /* tick to mark when thread needs to wake up*/
+    int nice;                           // used in priority's calculus of mlqs 
+    int recent_cpu;                     // important parameter for priority calculus, like nice factor. 
     struct list_elem allelem;           /* List element for all threads list. */
 
     /* Shared between thread.c and synch.c. */
