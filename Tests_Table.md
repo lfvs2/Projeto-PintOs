@@ -1,12 +1,12 @@
 ## Fase 1
 | #   | Teste                       | Implementada | Testada | Funcionando |
 | --- | --------------------------- | :----------: | :-----: | :---------: |
-| 1   | `alarm-single`              |      ❌       |    ❌    |      ❌      |
-| 2   | `alarm-multiple`            |      ❌       |    ❌    |      ❌      |
-| 3   | `alarm-simultaneous`        |      ❌       |    ❌    |      ❌      |
-| 4   | `alarm-priority`            |      ❌       |    ❌    |      ❌      |
-| 5   | `alarm-zero`                |      ❌       |    ❌    |      ❌      |
-| 6   | `alarm-negative`            |      ❌       |    ❌    |      ❌      |
+| 1   | `alarm-single`              |      ✅       |    ✅    |      ✅      |
+| 2   | `alarm-multiple`            |      ✅       |    ✅    |      ✅      |
+| 3   | `alarm-simultaneous`        |      ✅       |    ✅    |      ✅      |
+| 4   | `alarm-priority`            |      ✅       |    ✅    |      ✅      |
+| 5   | `alarm-zero`                |      ✅       |    ✅    |      ✅      |
+| 6   | `alarm-negative`            |      ✅       |    ✅    |      ✅      |
 | 7   | `priority-change`           |      ❌       |    ❌    |      ❌      |
 | 8   | `priority-donate-one`       |      ❌       |    ❌    |      ❌      |
 | 9   | `priority-donate-multiple`  |      ❌       |    ❌    |      ❌      |
