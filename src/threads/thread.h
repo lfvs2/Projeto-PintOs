@@ -4,6 +4,8 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+extern bool thread_mlfqs;
+
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -92,6 +94,10 @@ struct thread
     int nice;                           // used in priority's calculus of mlqs 
     int recent_cpu;                     // important parameter for priority calculus, like nice factor. 
     struct list_elem allelem;           /* List element for all threads list. */
+    /* Musanças pro MLFQ */
+   int nice;             /* nice value (-20 a 20) */
+   int recent_cpu;       /* recent CPU in fixed-point */
+
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
