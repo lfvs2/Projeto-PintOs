@@ -3,12 +3,13 @@
 
 #include <list.h>
 #include <stdbool.h>
+#include "threads/thread.h"   /* necessário para struct thread */
 
 /* A counting semaphore. */
 struct semaphore 
   {
     unsigned value;             /* Current value. */
-    struct list waiters;        /* List of waiting threads. */
+    struct list waiters;        /* List of waiting threads (may be ordered by priority). */
   };
 
 void sema_init (struct semaphore *, unsigned value);
@@ -33,7 +34,14 @@ bool lock_held_by_current_thread (const struct lock *);
 /* Condition variable. */
 struct condition 
   {
-    struct list waiters;        /* List of waiting threads. */
+    struct list waiters;        /* List of waiting semaphore_elems (ordered by priority). */
+  };
+
+/* Structure used inside cond_wait(). Declared here (only once). */
+struct semaphore_elem 
+  {
+    struct list_elem elem;      /* List element. */
+    struct semaphore semaphore; /* This semaphore. */
   };
 
 void cond_init (struct condition *);
@@ -41,11 +49,7 @@ void cond_wait (struct condition *, struct lock *);
 void cond_signal (struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
 
-/* Optimization barrier.
-
-   The compiler will not reorder operations across an
-   optimization barrier.  See "Optimization Barriers" in the
-   reference guide for more information.*/
+/* Optimization barrier. */
 #define barrier() asm volatile ("" : : : "memory")
 
 #endif /* threads/synch.h */

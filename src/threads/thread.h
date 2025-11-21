@@ -5,6 +5,9 @@
 #include <list.h>
 #include <stdint.h>
 
+/* Forward declaration to avoid circular include with synch.h */
+struct lock;
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -25,61 +28,12 @@ typedef int tid_t;
 #define PRI_MAX 63                      /* Highest priority. */
 
 /* A kernel thread or user process.
+   Each thread structure is stored in its own 4 kB page... (doc omitted) */
 
-   Each thread structure is stored in its own 4 kB page.  The
-   thread structure itself sits at the very bottom of the page
-   (at offset 0).  The rest of the page is reserved for the
-   thread's kernel stack, which grows downward from the top of
-   the page (at offset 4 kB).  Here's an illustration:
-
-        4 kB +---------------------------------+
-             |          kernel stack           |
-             |                |                |
-             |                |                |
-             |                V                |
-             |         grows downward          |
-             |                                 |
-             |                                 |
-             |                                 |
-             |                                 |
-             |                                 |
-             |                                 |
-             |                                 |
-             |                                 |
-             +---------------------------------+
-             |              magic              |
-             |                :                |
-             |                :                |
-             |               name              |
-             |              status             |
-        0 kB +---------------------------------+
-
-   The upshot of this is twofold:
-
-      1. First, `struct thread' must not be allowed to grow too
-         big.  If it does, then there will not be enough room for
-         the kernel stack.  Our base `struct thread' is only a
-         few bytes in size.  It probably should stay well under 1
-         kB.
-
-      2. Second, kernel stacks must not be allowed to grow too
-         large.  If a stack overflows, it will corrupt the thread
-         state.  Thus, kernel functions should not allocate large
-         structures or arrays as non-static local variables.  Use
-         dynamic allocation with malloc() or palloc_get_page()
-         instead.
-
-   The first symptom of either of these problems will probably be
-   an assertion failure in thread_current(), which checks that
-   the `magic' member of the running thread's `struct thread' is
-   set to THREAD_MAGIC.  Stack overflow will normally change this
-   value, triggering the assertion. */
 /* The `elem' member has a dual purpose.  It can be an element in
    the run queue (thread.c), or it can be an element in a
    semaphore wait list (synch.c).  It can be used these two ways
-   only because they are mutually exclusive: only a thread in the
-   ready state is on the run queue, whereas only a thread in the
-   blocked state is on a semaphore wait list. */
+   only because they are mutually exclusive. */
 struct thread
   {
     /* Owned by thread.c. */
@@ -87,14 +41,27 @@ struct thread
     enum thread_status status;          /* Thread state. */
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
-    int priority;                       /* Priority. */
-    int64_t wake_up_time;               /* tick to mark when thread needs to wake up*/
-    int nice;                           // used in priority's calculus of mlqs 
-    int recent_cpu;                     // important parameter for priority calculus, like nice factor. 
+
+    /* Priority fields */
+    int priority;                       /* Effective priority (may change due to donation). */
+    int original_priority;              /* Base/original priority (not changed by donations). */
+
+    /* Sleep/wakeup support (if you use it) */
+    int64_t wake_up_time;               /* tick to mark when thread needs to wake up */
+
+    /* MLFQS fields (kept here but may be unused if mlfqs disabled) */
+    int nice;                           /* used in MLFQS calculus */
+    int recent_cpu;                     /* used in MLFQS calculus */
+
+    /* Donation-related fields */
+    struct lock *waiting_lock;          /* Lock the thread is waiting on (for donation). */
+    struct list donations;              /* List of threads that donated to this thread. */
+    struct list_elem donation_elem;     /* List elem for being in another thread's donations list. */
+
     struct list_elem allelem;           /* List element for all threads list. */
 
     /* Shared between thread.c and synch.c. */
-    struct list_elem elem;              /* List element. */
+    struct list_elem elem;              /* List element (run queue or semaphore wait list). */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -110,6 +77,7 @@ struct thread
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
 
+/* Thread system functions */
 void thread_init (void);
 void thread_start (void);
 
@@ -133,12 +101,23 @@ void thread_yield (void);
 typedef void thread_action_func (struct thread *t, void *aux);
 void thread_foreach (thread_action_func *, void *);
 
+/* Priority API */
 int thread_get_priority (void);
-void thread_set_priority (int);
+void thread_set_priority (int new_priority);
 
+/* MLFQS API (kept, may be unimplemented if not using) */
 int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+/* --- Donation helpers (internal helpers exposed for linkage) --- */
+/* Donate priority from donor along lock-holder chain */
+void thread_donate_priority(struct thread *donor);
+/* Remove donations associated with a released lock from current thread */
+void thread_remove_with_lock(struct lock *lock);
+/* Refresh effective priority from original_priority and current donations */
+void thread_refresh_priority(struct thread *t);
+/* --------------------------------------------------------------- */
 
 #endif /* threads/thread.h */
