@@ -315,7 +315,13 @@ thread_unblock (struct thread *t)
   list_insert_ordered (&ready_list, &t->elem, thread_priority_cmp, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
+
+  /* Se estamos em contexto de interrupção e a thread desbloqueada tem
+     prioridade maior que a atual, peça preempção na saída da IRQ. */
+  if (intr_context () && t->priority > thread_current ()->priority)
+    intr_yield_on_return ();
 }
+
 
 const char *
 thread_name (void) 
@@ -418,19 +424,25 @@ thread_set_nice (int nice)
 {
   enum intr_level old_level = intr_disable ();
   thread_current ()->nice = nice;
+
   if (thread_mlfqs)
     {
-      /* recalcula prioridade da corrente e pode ceder */
+      /* recalcula prioridade da corrente */
       mlfqs_recalc_priority (thread_current ());
-      if (!list_empty (&ready_list))
-        {
-          struct thread *front = list_entry (list_front (&ready_list), struct thread, elem);
-          if (front->priority > thread_current ()->priority)
-            intr_yield_on_return ();
-        }
     }
+
   intr_set_level (old_level);
+
+  /* Se em contexto de interrupção e existe thread pronta com prioridade maior,
+     solicite preempção quando a interrupção retornar. */
+  if (thread_mlfqs && intr_context () && !list_empty (&ready_list))
+    {
+      struct thread *front = list_entry (list_front (&ready_list), struct thread, elem);
+      if (front->priority > thread_current ()->priority)
+        intr_yield_on_return ();
+    }
 }
+
 
 /* Returns the current thread's nice value. */
 int
@@ -593,3 +605,4 @@ allocate_tid (void)
 }
 
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+ 
