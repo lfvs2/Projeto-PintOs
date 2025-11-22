@@ -3,7 +3,7 @@
 /*Basicamente aqui adicionamos o timer.h para contar os ticks*/
 /*Colocamos uma conversão para o formato 17.14 pedido para o mlfqs*/
 /*Usamos TIMER_FREQ  e ticks para calcular a prioridade das threads de acordo com certos intervalos de tempo*/
-/*Nos blocos que envolvem inserção em lista(threads_unblock e threads_yields) mudamos a função para inserir em ordem de prioridade*/
+/*Nos blocos que envolvem inserção em lista(threads_unblock e threads_yields) mudamos a função de insert_push_back para insert_list_orderedpara inserir em ordem de prioridade*/
 /*Além disso, também botamos para a thread atual ceder a cpu, caso uma de maior prioridade esteja pronta e uma thread de maior prioridade solicitar preempção para o sistema após voltar de interrupção*/
 /*Em threads_set_nice recalculamos a prioridade da thread atual*/
 
