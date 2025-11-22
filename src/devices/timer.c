@@ -1,3 +1,9 @@
+/*Nesse módulo, as mudanças se concentram ao alarm clock*/
+/*Primeiro, implementamos e iniciamos uma lista para guardar as threads adormecidas(alarm clock efetivamente)*/
+/*Implementamos uma lógica para saber se já é hora da thread acordar contando os ticks do programa e da thread*/
+/*Colocamos, também, o cálculo de definição do tick de despertar e a inserção na lista de dormindo, bloqueando a thread até a hora de acordar*/
+/*Em timer_interrupt acordamos as threadsno tempo correto de cada uma, retirando da lista e fazendo preempção, caso tenha uma prioridade maior*/
+
 #include "devices/timer.h"
 #include <debug.h>
 #include <inttypes.h>
