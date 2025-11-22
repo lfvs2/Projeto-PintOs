@@ -1,4 +1,13 @@
-/* thread.c -- versão adaptada para MLFQS */
+/*Para implementar o alarm clock e o mlfqs, mexemos em alguns módulos, sendo eles timer.c, threads.c e .h e synch.c; os 3 primeiros sendo pro alarm clock e o synch.c e os modulos thread para o mlfqs*/
+/*Aqui vai um resumo do que foi feito, ao longo do código essas mudanças também estão comentadas*/
+/*Basicamente aqui adicionamos o timer.h para contar os ticks*/
+/*Colocamos uma conversão para o formato 17.14 pedido para o mlfqs*/
+/*Usamos TIMER_FREQ  e ticks para calcular a prioridade das threads de acordo com certos intervalos de tempo*/
+/*Nos blocos que envolvem inserção em lista(threads_unblock e threads_yields) mudamos a função para inserir em ordem de prioridade*/
+/*Além disso, também botamos para a thread atual ceder a cpu, caso uma de maior prioridade esteja pronta e uma thread de maior prioridade solicitar preempção para o sistema após voltar de interrupção*/
+/*Em threads_set_nice recalculamos a prioridade da thread atual*/
+
+
 #include "threads/thread.h"
 #include <debug.h>
 #include <stddef.h>
@@ -12,7 +21,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
-#include "devices/timer.h"   /* <-- adicionado: TIMER_FREQ, timer_ticks() */
+#include "devices/timer.h"   /* <-- adicionamos: TIMER_FREQ, timer_ticks() */
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -44,7 +53,7 @@ static unsigned thread_ticks;
 
 bool thread_mlfqs;
 
-/* ----------------------- MLFQS: ponto fixo 17.14 ----------------------- */
+/* Aqui fizemos a formtatação usando 17.14*/
 /* ponto fixo (F = 1 << 14) */
 #define FP (1 << 14)
 
@@ -133,8 +142,6 @@ static void mlfqs_recalc_recent_cpu_all (void)
     }
 }
 
-/* ---------------------------------------------------------------------- */
-
 static void kernel_thread (thread_func *, void *aux);
 static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
@@ -161,7 +168,7 @@ thread_init (void)
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
 
-  /* --- MLFQS: inicializações default --- */
+  /* inicialização do MLFQS */
   if (thread_mlfqs)
     {
       initial_thread->nice = 0;
@@ -198,11 +205,11 @@ thread_tick (void)
   else
     kernel_ticks++;
 
-  /* --- MLFQS: incrementa recent_cpu cada tick para thread rodando (exceto idle) --- */
+  /*incrementa recent_cpu a cada tick pra thread rodando*/
   if (thread_mlfqs && t != idle_thread)
     t->recent_cpu = fp_add (t->recent_cpu, int_to_fp (1));
 
-  /* A cada 4 ticks: recalcular prioridade da thread corrente */
+  /* A cada 4 ticks: recalcula prioridade da thread corrente */
   if (thread_mlfqs && timer_ticks () % 4 == 0)
     {
       mlfqs_recalc_priority (t);
@@ -215,7 +222,7 @@ thread_tick (void)
         }
     }
 
-  /* A cada segundo (TIMER_FREQ): recalcula load_avg, recent_cpu e priorities para todas */
+  /* A cada segundo TIMER_FREQ recalcula load_avg, recent_cpu e priorities para todas */
   if (thread_mlfqs && timer_ticks () % TIMER_FREQ == 0)
     {
       mlfqs_recalc_load_avg ();
@@ -237,7 +244,6 @@ thread_tick (void)
     intr_yield_on_return ();
 }
 
-/*lalalal*/
 void
 thread_print_stats (void) 
 {
@@ -278,7 +284,7 @@ thread_create (const char *name, int priority,
   sf->eip = switch_entry;
   sf->ebp = 0;
 
-  /* --- MLFQS: herdar nice e recent_cpu do pai (se MLFQS ativo) --- */
+  /*herdar nice e recent_cpu do pai se o MLFQS ktiver ativo*/
   if (thread_mlfqs)
     {
       struct thread *cur = thread_current ();
@@ -521,7 +527,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
 
-  /* --- MLFQS: inicializa campos nice e recent_cpu --- */
+  /*mlfqs inicializa campos nice e recent_cpu*/
   if (thread_mlfqs)
     {
       t->nice = 0;
