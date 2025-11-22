@@ -1,3 +1,6 @@
+/*Foram necesárias algumas mudanças para usar alarm clock e mlfqs*/
+/*adicionamos uma variável para marcar o tick de despertar de uma thread(alarm clock) e variáveis para contar a prioridade da thread(mlfqs)*/
+
 #ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
 
