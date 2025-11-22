@@ -1,3 +1,7 @@
+/*Nesse arquivo, houveram mudanças para implementar o mlfqs*/
+/*As mudanças se basearamem desabilitar interrupção para evitar race conditions, no despertar da nova thread seguida pela habilitação de interrupção e numa lógica de ceder cpu caso necessário por alguma thread*/
+
+
 /* This file is derived from source code for the Nachos
    instructional operating system.  The Nachos copyright notice
    is reproduced in full below. */
