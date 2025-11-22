@@ -19,15 +19,15 @@
 | 16  | `priority-sema`             |      ❌       |    ❌    |      ❌      |
 | 17  | `priority-condvar`          |      ❌       |    ❌    |      ❌      |
 | 18  | `priority-donate-chain`     |      ❌       |    ❌    |      ❌      |
-| 19  | `mlfqs-load-1`              |      ❌       |    ❌    |      ❌      |
-| 20  | `mlfqs-load-60`             |      ❌       |    ❌    |      ❌      |
-| 21  | `mlfqs-load-avg`            |      ❌       |    ❌    |      ❌      |
-| 22  | `mlfqs-recent-1`            |      ❌       |    ❌    |      ❌      |
-| 23  | `mlfqs-fair-2`              |      ❌       |    ❌    |      ❌      |
-| 24  | `mlfqs-fair-20`             |      ❌       |    ❌    |      ❌      |
-| 25  | `mlfqs-nice-2`              |      ❌       |    ❌    |      ❌      |
-| 26  | `mlfqs-nice-10`             |      ❌       |    ❌    |      ❌      |
-| 27  | `mlfqs-block`               |      ❌       |    ❌    |      ❌      |
+| 19  | `mlfqs-load-1`              |      ✅       |    ✅    |      ✅      |
+| 20  | `mlfqs-load-60`             |      ✅       |    ✅    |      ✅      |
+| 21  | `mlfqs-load-avg`            |      ✅       |    ✅    |      ✅      |
+| 22  | `mlfqs-recent-1`            |      ✅       |    ✅    |      ✅      |
+| 23  | `mlfqs-fair-2`              |      ✅       |    ✅    |      ✅      |
+| 24  | `mlfqs-fair-20`             |      ✅       |    ✅    |      ✅      |
+| 25  | `mlfqs-nice-2`              |      ✅       |    ✅    |      ✅      |
+| 26  | `mlfqs-nice-10`             |      ✅       |    ✅    |      ✅      |
+| 27  | `mlfqs-block`               |      ✅       |    ✅    |      ✅      |
 ## Fase 2
 
 | #   | Teste                        | Implementada | Testada | Funcionando |
