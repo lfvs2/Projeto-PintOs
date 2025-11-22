@@ -44,7 +44,7 @@ void
 timer_init (void) 
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
-  list_init(&sleep_list);
+  list_init(&sleep_list);// inicialização da lista de adormecidas
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
 }
 
@@ -93,6 +93,8 @@ timer_elapsed (int64_t then)
 {
   return timer_ticks () - then;
 }
+
+/* retorna a contagem atual de tivks, usada pra saber se a thread deve ou não acordar */
 static bool wake_tick_less(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) 
 {
   struct thread *t_a = list_entry(a, struct thread, elem);
